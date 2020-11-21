@@ -12,22 +12,22 @@ PROCEDURE:
     overlay
 PARAMETERS:
     img, a source image to overlay the filter on
-    flower, a filter
+    fil, a filter
     pos, x and y coordinate tuple to position to filter
 PURPOSE:
     overlays a four-channel iamge on a three-channel source image
 PRODUCES:
     None - a void function
 ============================================================================"""
-def overlay(img, flower, pos):
+def overlay(img, fil, pos):
 
     # Compute the start and end xy coordinates to overlay 
     # - sx, sy : start x and y
     # - ex, ey : end x and y
     sx = pos[0]
-    ex = pos[0] + flower.shape[1]
+    ex = pos[0] + fil.shape[1]
     sy = pos[1]
-    ey = pos[1] + flower.shape[0]
+    ey = pos[1] + fil.shape[0]
 
     # If filter goes outside the source image boundaries, then stop overlay
     if sx < 0 or sy < 0 or ex > img.shape[1] or ey > img.shape[0]:
@@ -35,9 +35,9 @@ def overlay(img, flower, pos):
 
     # img1: portion of source image
     # img2: filter iamge
-    img1 = img[sy:ey, sx:ex]               # shape=(h, w, 3)
-    img2 = flower[:, :, 0:3]               # shape=(h, w, 3)
-    alpha = 1. - (flower[:, :, 3] / 255.)  # shape=(h, w)
+    img1 = img[sy:ey, sx:ex]            # shape=(h, w, 3)
+    img2 = fil[:, :, 0:3]               # shape=(h, w, 3)
+    alpha = 1. - (fil[:, :, 3] / 255.)  # shape=(h, w)
 
     # Compute weighted sum of img1 and img2 per BGR channel
     img1[..., 0] = (img1[..., 0] * alpha + img2[..., 0] * (1. - alpha)).astype(np.uint8)
@@ -70,17 +70,38 @@ def main():
         print('Net open failed!')
         sys.exit()
 
-    # Open filter image
+    # Open filter images
     flowers = cv2.imread('./filter/filter1.png', cv2.IMREAD_UNCHANGED)
+    dog     = cv2.imread('./filter/filter2.png', cv2.IMREAD_UNCHANGED)
+    love    = cv2.imread('./filter/filter3.png', cv2.IMREAD_UNCHANGED)
+    cat     = cv2.imread('./filter/filter4.png', cv2.IMREAD_UNCHANGED)
+    bunny   = cv2.imread('./filter/filter5.png', cv2.IMREAD_UNCHANGED)
+    wig     = cv2.imread('./filter/filter6.png', cv2.IMREAD_UNCHANGED)
+    fox     = cv2.imread('./filter/filter7.png', cv2.IMREAD_UNCHANGED)
+    dog2    = cv2.imread('./filter/filter8.png', cv2.IMREAD_UNCHANGED)
+    crown   = cv2.imread('./filter/filter9.png', cv2.IMREAD_UNCHANGED)
+    rat     = cv2.imread('./filter/filter10.png', cv2.IMREAD_UNCHANGED)
+
+    # List to store filters
+    # - filt_y_list determines the y position of the filter 
+    # - need to finetune through trial and error for each filter
+    filter_list = [flowers, dog, love, cat, bunny, wig, fox, dog2, crown, rat]
+    fil_y_list = [200, 80, 200, 100, 300, 320, 120, 200, 300, 60]    
+
+    # Set current filter and its y position
+    counter = 0
+    cur_fil = filter_list[counter]
+    cur_fil_y = fil_y_list[counter]
 
     # Check image input
-    if flowers is None:
-        print('Error: Failed to open PNG image.')
-        sys.exit()
+    for fil in filter_list:
+        if fil is None:
+            print('Error: Failed to open PNG image.')
+            sys.exit()
 
-    # Attain flower filter dimensions and midpoint
-    flowers_h, flowers_w = flowers.shape[:2]
-    flowers_mid = flowers_w // 2
+    # Attain current filter dimensions and midpoint
+    cur_fil_h, cur_fil_w = cur_fil.shape[:2]
+    cur_fil_mid = cur_fil_w // 2
 
     while True:
         # Read each frame
@@ -121,38 +142,84 @@ def main():
 
             # FOR REFERENCE -- Write label at the top of the border box
             # label = f'Face: {confidence:4.2f}'
-            # cv2.putText(frame, label, (x1, y1 - 1), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 1, cv2.LINE_AA)
+            # cv2.putText(frame, label, (x1, y1 - 1), cv2.FONT_HERSHEY_SIMPLEX, 
+            #             0.8, (0, 255, 0), 1, cv2.LINE_AA)
 
-            # Scaling factor for filter
-            fx = (border_box_w / flowers_w) * 1.5
-            flowers_resized = cv2.resize(flowers, (0, 0), fx=fx, fy=fx, 
+            # Scaling factors for each filter
+            fx1 = (border_box_w / cur_fil_w) * 1.5
+            fx2 = (border_box_w / cur_fil_w) * 1.3
+            fx3 = (border_box_w / cur_fil_w) * 1.5
+            fx4 = (border_box_w / cur_fil_w) * 1.5
+            fx5 = (border_box_w / cur_fil_w) * 2
+            fx6 = (border_box_w / cur_fil_w) * 2.3
+            fx7 = (border_box_w / cur_fil_w) * 1.2
+            fx8 = (border_box_w / cur_fil_w) * 1.2
+            fx9 = (border_box_w / cur_fil_w) * 1.2
+            fx10 = (border_box_w / cur_fil_w) * 1.2
+            fx_list = [fx1, fx2, fx3, fx4, fx5, fx6, fx7, fx8, fx9, fx10]
+
+            # Resize filter using scaling factors
+            fx = fx_list[counter]
+            cur_fil_resized = cv2.resize(cur_fil, (0, 0), fx=fx, fy=fx, 
                                          interpolation=cv2.INTER_AREA)
 
             # Calculate the xy coordinates to overlay the resized filter
             # - the top left corner coordinate
-            pos = ( int(x1 + border_box_mid - flowers_mid * fx), 
-                    int(y1 - 200 * fx))
+            pos = ( int(x1 + border_box_mid - cur_fil_mid * fx), 
+                    int(y1 - cur_fil_y * fx))
 
-            # FOR REFERENCE -- Draw border around the flower filter
-            # pos2 = ( int(x1 + border_box_mid - flowers_mid*fx) + int(flowers_w*fx), int(y1 - 200 * fx) + int(flowers_h*fx))
+            # FOR REFERENCE -- Draw border around the  filter
+            # pos2 = (int(x1 + border_box_mid - cur_fil_mid*fx) + int(cur_fil_w*fx), 
+            #         int(y1 - cur_fil_y * fx) + int(cur_fil_h*fx))
             # cv2.rectangle(frame, pos, pos2, (0, 255, 0))
 
             # Overlay the filter on a frame
-            overlay(frame, flowers_resized, pos)
+            overlay(frame, cur_fil_resized, pos)
 
-        cv2.imshow('Face Detection', frame)
+        cv2.imshow('Face Filter', frame)
 
-        if cv2.waitKey(1) == 27:
+        key = cv2.waitKey(1)
+
+        if key == 27:  # ESC
             break
+
+        # Press space to change filters
+        if key == 32:  # Space
+            if counter < len(filter_list) - 1:
+                # Change to next filter
+                counter += 1
+                cur_fil = filter_list[counter]
+                cur_fil_y = fil_y_list[counter]
+
+                # Attain the new dimensions 
+                cur_fil_h, cur_fil_w = cur_fil.shape[:2]
+                cur_fil_mid = cur_fil_w // 2
+            else:
+                # Change to first filter
+                counter = 0
+                cur_fil = filter_list[counter]
+                cur_fil_y = fil_y_list[counter]
+
+                # Attain the new dimensions 
+                cur_fil_h, cur_fil_w = cur_fil.shape[:2]
+                cur_fil_mid = cur_fil_w // 2
 
     cv2.destroyAllWindows()
 
 if __name__ == '__main__':
     main()
 
-"""============================================================================
-REFERENCE
-Transparent filter image from:
-https://freepngimg.com/png/16981-snapchat-filters-png-image
 
-============================================================================"""
+""" REFERENCES
+Transparent filter image from:
+1.  https://freepngimg.com/png/16981-snapchat-filters-png-image
+2.  https://freepngimg.com/png/16984-snapchat-filters-png-clipart
+3.  https://freepngimg.com/png/16980-snapchat-filters-png-picture
+4.  https://freepngimg.com/png/16977-snapchat-filters-png
+5.  https://freepngimg.com/png/16989-snapchat-filters-free-png-image
+6.  https://www.stickpng.com/img/clothes/wigs/wig-yellow-bob
+7.  https://www.pinclipart.com/pindetail/ThmJim_snapchat-filters-clipart-pink-flower-animal-filter-png/
+8.  https://www.pinclipart.com/pindetail/iTwRobw_dogears-snapchat-snapchatfilter-glassesfilter-glasses-dog-ears-with/
+9.  https://www.pinclipart.com/pindetail/iTwRoii_snapchat-filters-clipart-aesthetic-transparent-background-aesthetic-heart/
+10. https://www.pinclipart.com/pindetail/ibToTbb_snapchat-filters-clipart-snow-snapchat-filtros-de-hallowen/
+"""
