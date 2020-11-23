@@ -27,7 +27,7 @@ git clone https://github.com/byunsy/face-filter.git
 ## Demonstrations
 
 The program can accurately detect a human face and apply different filters. The face filter remains proportional to the face regardless of how far or close a user is to the camera.
-![](images/face-filter1.gif)
+![](images/face_filter1.gif)
 
 The program can also detect multiple human faces within a frame and apply filters to each of those faces.
-![](images/face-filter2.gif)
+![](images/face_filter2.gif)
