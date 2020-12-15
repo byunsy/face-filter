@@ -16,9 +16,11 @@ I used the OpenCV package for python (version 4.1.0.25 or above) with Python 3.7
 pip install opencv-python==4.1.0.25
 ```
 
+One can download and use download_weights.py to download the required DNN models or download it directly using the link [here](https://raw.githubusercontent.com/opencv/opencv_3rdparty/dnn_samples_face_detector_20180205_fp16/res10_300x300_ssd_iter_140000_fp16.caffemodel). Note that the files can also be found in the current repository.
+
 ## Usage
 
-Clone the lane-detection repository in your directory.
+Clone the face-filter repository in your directory.
 
 ```bash
 git clone https://github.com/byunsy/face-filter.git
